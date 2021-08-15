@@ -30,14 +30,15 @@ class App extends Component {
 
       // If networkId is 4, then get contract instances in Ethereum
       if (Number(networkId) === Number(4)) {
-        const deployedNetwork = MyTokenEthContract.networks[networkId];
+        var deployedNetwork = MyTokenEthContract.networks[networkId];
         const myTokenEthInstance = new web3.eth.Contract(
           MyTokenEthContract.abi,
           deployedNetwork && deployedNetwork.address,
         );
         balanceof = await myTokenEthInstance.methods.balanceOf(accounts[0]).call();
 
-        const ERCBridgeEthInstance = new web3.eth.Contract(
+        deployedNetwork = ERCBridgeEthContract.networks[networkId];
+        this.ERCBridgeEthInstance = new web3.eth.Contract(
           ERCBridgeEthContract.abi,
           deployedNetwork && deployedNetwork.address,
         );
@@ -53,8 +54,20 @@ class App extends Component {
         balanceof = await myTokenBscInstance.methods.balanceOf(accounts[0]).call();
       }
 
-      // Set web3, accounts, and contract to the state, and then proceed with an
-      // example of interacting with the contract's methods.
+      const deployedNetworkEth = ERCBridgeEthContract.networks['4'];
+      this.BridgeEthInstance = new web3Eth.eth.Contract (
+        ERCBridgeEthContract.abi,
+        deployedNetworkEth && deployedNetworkEth.address,
+      )
+
+      const deployedNetworkBsc = ERCBridgeBscContract.networks['97'];
+      this.BridgeBscInstance = new web3Eth.eth.Contract (
+        ERCBridgeBscContract.abi,
+        deployedNetworkBsc && deployedNetworkBsc.address,
+      )
+
+      
+      this.listenToSend();
       this.setState({ web3, accounts, balance: balanceof });
     } catch (error) {
       // Catch any errors for any of the above operations.
@@ -77,7 +90,16 @@ class App extends Component {
   handleSendSubmit = async () => {
     const {recipientAddress} = this.state;
     const {numTokens} = this.state;
-    await this.ERCBridgeEthInstance.methods.burn(recipientAddress, numTokens).send({from: this.accounts[0]});
+    await this.ERCBridgeEthInstance.methods.burn(recipientAddress, numTokens).send({from: this.state.accounts[0]});
+  }
+
+  listenToSend = () => {
+    let self = this;
+    this.BridgeEthInstance.events.Send().on("data", async function(evt) {
+      const { senderAddress, recipientAddress , numTokens } = evt.returnValues;
+      const owner = await this.BridgeBscInstance.methods.owner().call();
+      await this.BridgeBscInstance.methods.mint(recipientAddress, numTokens).send({from: owner});
+    });
   }
 
   render() {
