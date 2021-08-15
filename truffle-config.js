@@ -16,7 +16,14 @@ module.exports = {
         return new HDWalletProvider(process.env.MNEMONIC, "https://rinkeby.infura.io/v3/e231165cabd748bab6b079a9a57c530c", MetaMaskAccountIndex)
       },
       network_id: 4
-    }
+    },
+    bsc: {
+      provider: function () {
+        return new HDWalletProvider(process.env.MNEMONIC, "https://data-seed-prebsc-1-s1.binance.org:8545", MetaMaskAccountIndex)
+      },
+      network_id: 97
+    },
+
   },
   compilers: {
     solc: {
